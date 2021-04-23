@@ -14,13 +14,13 @@
 using namespace cv;
 using namespace std;
 
-static int THREADS = 4;
+static int THREADS;
 
 Mat img, img_gray, img_inv, img_blurred, img_final;
 int rows, cols;
 
 
-void *img2gray(void *arg){
+void *img2invgray(void *arg){
    	int initIterationRow, endIterationRow, initIterationCol, endIterationCol, threadId = *(int *)arg;
 
 	initIterationRow = (floor(rows/THREADS)) * threadId;
@@ -37,16 +37,6 @@ void *img2gray(void *arg){
     }
     return 0;
 }
-
-//Mat imgInv(Mat src, Mat dst){
-//    for (int i = 0; i < src.rows; i++){
-//        for (int j = 0; j < src.cols; j++){
-//            dst.at<uchar>(i, j) = 255 - src.at<uchar>(i,j);
-//        }
-//    }
-//    return dst;
-//}
-
 
 void *imgBlur(void *arg){
     // cout<<"BLUR!!!"<<endl;
@@ -79,18 +69,7 @@ void *imgBlur(void *arg){
     return 0;
 }
 
-Mat resize(Mat img, int scale_percent)
-{
-    float width = int(img.size().width * scale_percent / 100);
-    float height = int(img.size().height * scale_percent / 100);
-    Size dim = Size(width, height);
-    Mat resized;
-    resize(img, resized, dim, INTER_AREA);
-    return resized;
-}
-
-
-Mat myDodge(Mat img1, Mat img2, Mat dst){
+Mat dodge(Mat img1, Mat img2, Mat dst){
     // cout<<"DODGE!!!"<<endl;
     dst = Mat::zeros(img1.rows, img1.cols, img1.type());
     dst = img1 / (255-img2)*256;
@@ -114,10 +93,6 @@ int main(int argc, char **argv){
 
     gettimeofday(&tval_before, NULL);
 
-//    img = imread("landscape.jpg", IMREAD_COLOR);
-    // img = imread("house.jpg", IMREAD_COLOR);
-//    img = imread("imagetest.jpg", IMREAD_COLOR);
-//    img = imread("brothers.jpg", IMREAD_COLOR);
     img = imread(argv[1], IMREAD_COLOR);
 
     if (!img.data){
@@ -133,12 +108,9 @@ int main(int argc, char **argv){
     img_final = Mat::zeros(rows, cols, CV_8UC1);
     img_blurred = Mat::zeros(rows, cols,CV_8UC1);
 
-//    img_final = img_gray / (255-img_blured)*256;
-
     for(i = 0; i < THREADS; i++){
         threadId[i] = i;
-        // pthread_create(&thread[i], NULL, (void *)ConvertirGris, &threadId[i]);
-		pthread_create(&thread[i], NULL, img2gray, &threadId[i]);
+		pthread_create(&thread[i], NULL, img2invgray, &threadId[i]);
     }
 
     for(i = 0; i < THREADS; i++){
@@ -147,7 +119,6 @@ int main(int argc, char **argv){
 
 	for(i = 0; i < THREADS; i++){
         threadId[i] = i;
-        // pthread_create(&thread[i], NULL, (void *)Sobelfilter, &threadId[i]);
 		pthread_create(&thread[i], NULL, imgBlur, &threadId[i]);
     }
 
@@ -155,32 +126,18 @@ int main(int argc, char **argv){
         pthread_join(thread[i], (void **)&retval);
     }
 
-    // cout<<img_gray.type()<<endl;
-    // cout<<img_blurred.type()<<endl;
-    img_final = myDodge(img_gray, img_blurred, img_final);
-//img_final = img_gray;
+    img_final = dodge(img_gray, img_blurred, img_final);
 
 	gettimeofday(&tval_after, NULL);
-   timersub(&tval_after, &tval_before, &tval_result);
-    // printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+    timersub(&tval_after, &tval_before, &tval_result);
+
 	printf("%ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 
-
-    if(img.cols > 2000){
-        img = resize(img, 25);
-        img_final = resize(img_final, 25);
-    }else if(img.cols > 1100){
-        img = resize(img, 80);
-        img_final = resize(img_final, 80);
-    }
-
-
-//    namedWindow( "Image", WINDOW_AUTOSIZE );
+    // namedWindow( "Image", WINDOW_AUTOSIZE );
     // imshow( "Image", img);
     // imshow( "Image Sketch", img_final);
     imwrite(argv[2], img_final);
 
     waitKey(0);
-//    cout<<img;
     return 0;
 }
