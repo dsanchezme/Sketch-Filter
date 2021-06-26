@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-make toSketchThreads
+make toSketchOMP
 for file in images/*.jpg
 do
     times_file='times/times_'$(basename "$file" | sed 's/\(.*\)\..*/\1/')'.txt'
@@ -16,10 +16,8 @@ do
         echo "" >> $times_file
         for i in {1..10}
         do
-            ./toSketchThreads $file $out_file $num_threads >> $times_file
+            ./toSketchOMP $file $out_file $num_threads >> $times_file
         done
         echo "" >> $times_file
     done
 done
-
-./graphing
