@@ -51,7 +51,7 @@ int imgBlur(Mat imgBlur, Mat img_inv, int ID){
     float sum = 0;
     int blurSize = 15;
 
-    #pragma omp parallel for collapse(2)
+    // #pragma omp parallel for collapse(2)
     for (int i = initRow; i < endRow; i++){
         for (int j = 0; j < cols; j++){
             int ki_start = max(i - blurSize/2, 0);
@@ -60,7 +60,7 @@ int imgBlur(Mat imgBlur, Mat img_inv, int ID){
             int kj_end = min(j + blurSize/2 + 1, cols);
 
             sum = 0;
-            #pragma omp parallel for collapse(2)
+            // #pragma omp parallel for collapse(2)
             for(int ki = ki_start; ki < ki_end; ki++){
                 for(int kj = kj_start; kj < kj_end; kj++){
                       sum += img_inv.at<uchar>(ki,kj);
@@ -139,9 +139,9 @@ int main(int argc, char **argv){
 
     // namedWindow( "Image", WINDOW_AUTOSIZE );
     // imshow( "Image", img);
-    imshow( "Image Sketch", img_final);
+    // imshow( "Image Sketch", img_final);
 
-    // imwrite(argv[2], img_final);
+    imwrite(argv[2], img_final);
 
     waitKey(0);
     return 0;

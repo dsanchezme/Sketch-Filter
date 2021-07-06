@@ -21,3 +21,6 @@ do
         echo "" >> $times_file
     done
 done
+
+./graphing.py
+echo "Finished :)"
